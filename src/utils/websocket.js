@@ -32,11 +32,11 @@ function createWs() {
 
   //自定义
   // 用户上线
-  socket.on("join", (data) => {
+  socket.on("online", (data) => {
     Notify.info(`${data.username}(${data.sid})上线了`);
   });
   // 用户下线
-  socket.on("leave", (data) => {
+  socket.on("offline", (data) => {
     Notify.info(`${data.username}(${data.sid})下线了`);
   });
   // 获取报错信息

@@ -52,7 +52,7 @@ export default {
       console.log(key, keyPath);
     },
     jump(key) {
-      if (this.$route.path != `/${key}` && key.startsWith("/")) {
+      if (this.$route.path != key && key.startsWith("/")) {
         this.$router.push(key);
       }
     },
@@ -66,7 +66,6 @@ export default {
     },
     vivo50() {
       this.vivo50Dialog = true;
-      console.log(this.vivo50Dialog);
     },
   },
 };

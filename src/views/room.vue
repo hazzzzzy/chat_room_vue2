@@ -14,7 +14,7 @@
       </el-menu>
     </div>
     <div class="msg-container">
-      <el-card class="showStatus" v-show="isUserJoinRoom">
+      <el-card class="showStatus" v-show="isConnect">
         连接状态：<span :style="{ color: isConnect ? 'green' : 'red' }">
           {{ socketStatus }} </span
         >| 当前房间在线人数：{{ onlineUserAmount }}
@@ -33,7 +33,7 @@
           {{ msg[1] }}
         </el-card>
       </el-card>
-      <el-card class="input-box" shadow="always">
+      <el-card class="input-box" shadow="always" v-show="isConnect">
         <el-form
           :model="msgForm"
           :inline="true"
@@ -77,7 +77,6 @@ export default {
         message: "",
       },
       rooms: [],
-      isUserJoinRoom: false,
       loading: {
         roomListLoading: false,
       },
@@ -111,7 +110,7 @@ export default {
     },
     jump(key) {
       if (this.isConnect !== true) {
-        this.connWs();
+        this.connWs(key);
       }
     },
     async getRoomList() {
@@ -163,7 +162,7 @@ export default {
     //     });
     //   }
     // },
-    connWs() {
+    connWs(roomID) {
       const username = getCache(process.env.VUE_APP_USERNAME_KEY);
       if (username) {
         this.$createWs();
@@ -172,28 +171,27 @@ export default {
         // 成功连接
         this.$socket.on("connect", () => {
           this.$socket.emit("join", username);
-          Notify.success("连接成功");
+          // Notify.success("连接成功");
           this.isConnect = true;
         });
         // 断开连接
         this.$socket.on("disconnect", () => {
           this.isConnect = false;
-          Notify.info("已断开连接");
+          // Notify.info("已断开连接");
         });
         // 获取广播消息
-        this.$socket.on("getMsg", (msg) => {
+        this.$socket.on("clientGetMsg", (msg) => {
           this.messages.push([msg.sender, msg.msg, msg.sendTime]);
         });
         // 获取在线人数
         this.$socket.on("countUser", (data) => {
           this.onlineUserAmount = data.onlineUserAmount;
         });
-        // 获取房间
-        this.$socket.on("getRoomList", (data) => {
-          this.rooms = data;
-        });
+        // 用户加入房间
+        this.$socket.on("clientJoinRoom", (data) => {});
       } else {
         Notify.error("未检测到登录态，请重新登录");
+        this.$router.push("/login");
       }
       this.loading.roomListLoading = false;
     },
