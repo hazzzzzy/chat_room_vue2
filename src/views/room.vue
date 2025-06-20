@@ -19,18 +19,26 @@
           {{ socketStatus }} </span
         >| 当前房间在线人数：{{ onlineUserAmount }}
       </el-card>
-      <el-card class="msg-box" id="msgBox">
-        <el-empty description="请选择房间" class="empty-container"></el-empty>
+      <el-card class="msg-box" id="msgBox" v-loading="loading.historyLoading">
+        <el-empty
+          description="请选择房间"
+          class="empty-container"
+          v-show="!room"
+        ></el-empty>
         <el-card
           v-for="(msg, index) in messages"
           :key="index"
           shadow="always"
           class="msg-ele"
+          :style="{
+            'background-color':
+              msg.sender === '系统消息' ? 'rgb(255, 255, 144)' : none,
+          }"
         >
           <div slot="header" class="box-head">
-            <span>{{ msg[0] }} | {{ msg[2] }}</span>
+            <span>{{ msg.sender }} | {{ msg.sendTime }}</span>
           </div>
-          {{ msg[1] }}
+          {{ msg.msg }}
         </el-card>
       </el-card>
       <el-card class="input-box" shadow="always" v-show="isConnect">
@@ -76,9 +84,11 @@ export default {
       msgForm: {
         message: "",
       },
+      room: null,
       rooms: [],
       loading: {
         roomListLoading: false,
+        historyLoading: false,
       },
     };
   },
@@ -102,16 +112,28 @@ export default {
     // this.connWs();
   },
   methods: {
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
-    },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
-    },
-    jump(key) {
+    // handleOpen(key, keyPath) {
+    //   console.log(key, keyPath);
+    // },
+    // handleClose(key, keyPath) {
+    //   console.log(key, keyPath);
+    // },
+    async jump(key) {
+      this.loading.roomListLoading = true;
       if (this.isConnect !== true) {
-        this.connWs(key);
+        await this.connWs();
       }
+      // if (key === this.room) {
+      //   return;
+      // }
+      this.room = key;
+      this.messages = [];
+      await this.getHistory();
+      this.$socket.emit("serverJoinRoom", {
+        roomID: key,
+        username: getCache(process.env.VUE_APP_USERNAME_KEY),
+        userID: getCache(process.env.VUE_APP_USERID_KEY),
+      });
     },
     async getRoomList() {
       this.loading.roomListLoading = true;
@@ -127,13 +149,25 @@ export default {
           this.loading.roomListLoading = false;
         });
     },
+    async getHistory() {
+      this.loading.historyLoading = true;
+      await http
+        .get("/rooms/getHistory", { params: { roomID: this.room } })
+        .then((data) => {
+          this.messages = data.data;
+        })
+        .catch((e) => {
+          console.error(e);
+        })
+        .finally(() => {
+          this.loading.historyLoading = false;
+        });
+    },
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          this.$socket.emit("sendMsg", this.msgForm.message);
+          this.$socket.emit("serverSendMsg", this.msgForm.message);
           this.msgForm.message = "";
-        } else {
-          return;
         }
       });
     },
@@ -162,33 +196,44 @@ export default {
     //     });
     //   }
     // },
-    connWs(roomID) {
+    connWs() {
       const username = getCache(process.env.VUE_APP_USERNAME_KEY);
       if (username) {
         this.$createWs();
         this.$socket = this.$getSocket();
-        this.$socket.emit("getRoomList");
+        // this.$socket.emit("getRoomList");
         // 成功连接
         this.$socket.on("connect", () => {
-          this.$socket.emit("join", username);
-          // Notify.success("连接成功");
+          this.$socket.emit("serverOnline", username);
+          Notify.success("连接成功");
           this.isConnect = true;
         });
         // 断开连接
-        this.$socket.on("disconnect", () => {
+        this.$socket.on("disconnect", (reason) => {
           this.isConnect = false;
-          // Notify.info("已断开连接");
+          console.log(reason);
+          Notify.info("已断开连接");
         });
         // 获取广播消息
-        this.$socket.on("clientGetMsg", (msg) => {
-          this.messages.push([msg.sender, msg.msg, msg.sendTime]);
+        this.$socket.on("clientGetMsg", (data) => {
+          this.messages.push({
+            role: data.role,
+            msg: data.msg,
+            sender: data.sender,
+            sendTime: data.sendTime,
+          });
         });
         // 获取在线人数
         this.$socket.on("countUser", (data) => {
           this.onlineUserAmount = data.onlineUserAmount;
         });
         // 用户加入房间
-        this.$socket.on("clientJoinRoom", (data) => {});
+        this.$socket.on("clientJoinRoom", (data) => {
+          this.room = data.room;
+          this.loading.roomListLoading = false;
+        });
+        // // 用户离开房间
+        // this.$socket.on("clientLeaveRoom", (data) => {});
       } else {
         Notify.error("未检测到登录态，请重新登录");
         this.$router.push("/login");
@@ -248,8 +293,7 @@ export default {
       margin-bottom: 20px;
 
       .msg-ele {
-        flex: 2;
-
+        width: auto;
         margin-bottom: 10px;
         word-break: break-word; /* 单词换行 */
         //   white-space: normal; /* 默认换行 */
@@ -264,7 +308,8 @@ export default {
       }
     }
     .input-box {
-      height: 20%;
+      flex: 2;
+      // height: 20%;
       width: 95%;
     }
   }

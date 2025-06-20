@@ -33,11 +33,11 @@ function createWs() {
   //自定义
   // 用户上线
   socket.on("online", (data) => {
-    Notify.info(`${data.username}(${data.sid})上线了`);
+    Notify.info(`${data.username} 上线了`);
   });
   // 用户下线
   socket.on("offline", (data) => {
-    Notify.info(`${data.username}(${data.sid})下线了`);
+    Notify.info(`${data.username} 下线了`);
   });
   // 获取报错信息
   socket.on("error", (data) => {
