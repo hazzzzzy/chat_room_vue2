@@ -1,7 +1,9 @@
 import axios from "axios";
-import { Message } from "element-ui"; // ✅ 手动引入 Message 组件
+import Notify from "./notify"; // ✅ 手动引入 Message 组件
 import { getCache } from "@/utils/useCache";
 import router from "@/route"; // 引入 Vue Router 实例（如果你需要跳转登录页）
+
+// const ignoreList = ["/login"];
 
 const http = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL,
@@ -9,20 +11,21 @@ const http = axios.create({
   // headers: { "Content-Type": "application/json" },
 });
 
-// 请求拦截器
-// http.interceptors.request.use(
-//   (config) => {
-//     const username = getCache("username");
-//     if (!username) {
-//       router.push("/login");
-//       return Promise.reject(new Error("未登录，已跳转登录页"));
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+// 2. 添加请求拦截器
+http.interceptors.request.use(
+  (config) => {
+    const token = getCache(process.env.VUE_APP_TOKEN_KEY); // 或从你的 Vuex/Redux store 获取
+    // 如果 Token 存在，就添加到请求头中
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config; // 必须返回 config
+  },
+  (error) => {
+    // 对请求错误做些什么
+    return Promise.reject(error);
+  }
+);
 
 // 响应拦截器
 http.interceptors.response.use(
@@ -32,15 +35,19 @@ http.interceptors.response.use(
     }
 
     let data = response.data;
-    if (data.code !== 0) {
-      Message.error(data.msg); // ✅ 直接调用 Message.error
-      return Promise.reject(data.msg); // 确保错误被捕获
+    if (data.code === -2) {
+      Notify.error(data.msg);
+      router.push("/login");
+      return Promise.reject(data.msg);
+    } else if (data.code === -1) {
+      Notify.error(data.msg);
+      return Promise.reject(data.msg);
     } else {
       return response.data;
     }
   },
   (error) => {
-    Message.error(
+    Notify.error(
       error.response?.data?.msg || error.message || "服务器故障，请联系管理员"
     );
     return Promise.reject(error);

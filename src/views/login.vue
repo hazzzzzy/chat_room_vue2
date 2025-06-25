@@ -69,9 +69,10 @@ export default {
             password: this.loginForm.password,
           })
           .then((r) => {
-            setCache(process.env.VUE_APP_USERNAME_KEY, r.data.account);
+            setCache(process.env.VUE_APP_USERNAME_KEY, r.data.username);
             setCache(process.env.VUE_APP_USERID_KEY, r.data.userID);
-            Notify.success(`欢迎用户 ${r.data.account} ，吴浩贤除外`);
+            setCache(process.env.VUE_APP_TOKEN_KEY, r.data.token);
+            Notify.success(`欢迎用户 ${r.data.username} ，吴浩贤除外`);
             this.$router.push("/home");
           })
           .catch((r) => {

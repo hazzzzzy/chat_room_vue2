@@ -31,7 +31,7 @@ const router = new VueRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  let isAuthenticated = getCache(process.env.VUE_APP_USERNAME_KEY);
+  let isAuthenticated = getCache(process.env.VUE_APP_TOKEN_KEY);
   if (to.path !== "/login" && !isAuthenticated) {
     Notify.error("检测到用户未登录，请登录后使用");
     next({ path: "/login" });

@@ -6,15 +6,18 @@ import router from "@/route"; // 引入 Vue Router 实例（如果你需要跳�
 
 let socket = null;
 function createWs() {
-  if (!getCache(process.env.VUE_APP_USERNAME_KEY)) {
-    Notify.error("未登录");
-    router.push("/login");
-  }
+  // if (!getCache(process.env.VUE_APP_USERNAME_KEY)) {
+  //   Notify.error("未登录");
+  //   router.push("/login");
+  // }
   // 替换成你的后端 WebSocket 地址
   socket = io("http://10.1.12.187:10086", {
+    extraHeaders: {
+      Authorization: `Bearer ${process.env.VUE_APP_TOKEN_KEY}`, // 传递 JWT Token
+    },
     reconnection: true, // 开启重连
     reconnectionAttempts: 5, // 最多重连 5 次
-    reconnectionDelay: 5000, // 每次重连间隔 2000ms
+    reconnectionDelay: 5000, // 每次重连间隔 5000ms
     timeout: 5000, // 连接超时时间
     autoConnect: true, // 自动连接
     transports: ["websocket"],

@@ -9,5 +9,12 @@ function setCache(k, v) {
 function delCache(k) {
   return localStorage.removeItem(k);
 }
+function getMyself() {
+  let username = getCache(process.env.VUE_APP_USERNAME_KEY);
+  let userID = getCache(process.env.VUE_APP_USERID_KEY);
+  let token = getCache(process.env.VUE_APP_TOKEN_KEY);
 
-export { getCache, setCache, delCache };
+  return [username, userID];
+}
+
+export { getCache, setCache, delCache, getMyself };

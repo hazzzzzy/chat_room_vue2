@@ -17,7 +17,9 @@
       <el-card class="showStatus" v-show="isConnect">
         连接状态：<span :style="{ color: isConnect ? 'green' : 'red' }">
           {{ socketStatus }} </span
-        >| 当前房间在线人数：{{ onlineUserAmount }}
+        >| 当前房间在线人数：{{ onlineRoomUserAmount }} | 当前在线人数：{{
+          onlineUserAmount
+        }}
       </el-card>
       <el-card class="msg-box" id="msgBox" v-loading="loading.historyLoading">
         <el-empty
@@ -31,8 +33,7 @@
           shadow="always"
           class="msg-ele"
           :style="{
-            'background-color':
-              msg.sender === '系统消息' ? 'rgb(255, 255, 144)' : none,
+            'background-color': getMsgColor(msg.sender),
           }"
         >
           <div slot="header" class="box-head">
@@ -71,7 +72,7 @@
 
 <script>
 import Notify from "@/utils/notify";
-import { getCache, setCache } from "@/utils/useCache";
+import { getCache, getMyself } from "@/utils/useCache";
 import http from "@/utils/r";
 
 export default {
@@ -81,6 +82,7 @@ export default {
       messages: [],
       isConnect: false,
       onlineUserAmount: 0,
+      onlineRoomUserAmount: 0,
       msgForm: {
         message: "",
       },
@@ -123,17 +125,21 @@ export default {
       if (this.isConnect !== true) {
         await this.connWs();
       }
-      // if (key === this.room) {
-      //   return;
-      // }
+      if (key === this.room) {
+        this.loading.roomListLoading = false;
+        return;
+      }
       this.room = key;
       this.messages = [];
       await this.getHistory();
       this.$socket.emit("serverJoinRoom", {
         roomID: key,
-        username: getCache(process.env.VUE_APP_USERNAME_KEY),
-        userID: getCache(process.env.VUE_APP_USERID_KEY),
+        username: getMyself()[0],
+        userID: getMyself()[1],
       });
+      // this.$socket.emit("serverCountRoomUser", {
+      //   roomID: key,
+      // });
     },
     async getRoomList() {
       this.loading.roomListLoading = true;
@@ -232,13 +238,27 @@ export default {
           this.room = data.room;
           this.loading.roomListLoading = false;
         });
-        // // 用户离开房间
-        // this.$socket.on("clientLeaveRoom", (data) => {});
+        // 用户离开房间
+        this.$socket.on("clientCountRoomUser", (data) => {
+          this.onlineRoomUserAmount = data.onlineRoomUserAmount;
+        });
       } else {
         Notify.error("未检测到登录态，请重新登录");
         this.$router.push("/login");
       }
       this.loading.roomListLoading = false;
+    },
+    getMsgColor(sender) {
+      const username = getMyself()[0];
+      // console.log(sender, username);
+
+      if (sender === "系统消息") {
+        return "rgb(255, 255, 144)";
+      } else if (sender === username) {
+        return "rgb(149, 236, 105)";
+      } else {
+        return;
+      }
     },
   },
 };
@@ -311,6 +331,7 @@ export default {
       flex: 2;
       // height: 20%;
       width: 95%;
+      color: rgb(rgb(91, 205, 10), green, blue);
     }
   }
 }
