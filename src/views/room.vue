@@ -125,21 +125,17 @@ export default {
       if (this.isConnect !== true) {
         await this.connWs();
       }
-      if (key === this.room) {
+      if (key == this.room) {
         this.loading.roomListLoading = false;
         return;
       }
-      this.room = key;
-      this.messages = [];
-      await this.getHistory();
       this.$socket.emit("serverJoinRoom", {
         roomID: key,
         username: getMyself()[0],
         userID: getMyself()[1],
       });
-      // this.$socket.emit("serverCountRoomUser", {
-      //   roomID: key,
-      // });
+      this.room = key;
+      this.messages = [];
     },
     async getRoomList() {
       this.loading.roomListLoading = true;
@@ -242,11 +238,15 @@ export default {
         this.$socket.on("clientCountRoomUser", (data) => {
           this.onlineRoomUserAmount = data.onlineRoomUserAmount;
         });
+        // 接收历史消息
+        this.$socket.on("clientGetHistory", (data) => {
+          this.messages = data;
+        });
       } else {
         Notify.error("未检测到登录态，请重新登录");
         this.$router.push("/login");
       }
-      this.loading.roomListLoading = false;
+      // this.loading.roomListLoading = false;
     },
     getMsgColor(sender) {
       const username = getMyself()[0];

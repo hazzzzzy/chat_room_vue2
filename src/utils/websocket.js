@@ -11,9 +11,9 @@ function createWs() {
   //   router.push("/login");
   // }
   // 替换成你的后端 WebSocket 地址
-  socket = io("http://10.1.12.187:10086", {
-    extraHeaders: {
-      Authorization: `Bearer ${process.env.VUE_APP_TOKEN_KEY}`, // 传递 JWT Token
+  socket = io(`http://10.1.12.187:10086`, {
+    auth: {
+      token: "Bearer " + getCache(process.env.VUE_APP_TOKEN_KEY),
     },
     reconnection: true, // 开启重连
     reconnectionAttempts: 5, // 最多重连 5 次
@@ -46,9 +46,13 @@ function createWs() {
   socket.on("error", (data) => {
     if (data.msg != null) {
       Notify.error(data.msg);
+    } else {
+      Notify.error(data);
     }
   });
 }
+
+export { socket };
 
 export default {
   install(Vue) {

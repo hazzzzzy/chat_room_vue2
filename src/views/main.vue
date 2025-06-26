@@ -85,12 +85,6 @@ export default {
     };
   },
   methods: {
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
-    },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
-    },
     jump(key) {
       if (this.$route.path != key && key.startsWith("/")) {
         this.$router.push(key);
@@ -102,6 +96,7 @@ export default {
       );
       delCache(process.env.VUE_APP_USERNAME_KEY);
       delCache(process.env.VUE_APP_USERID_KEY);
+      delCache(process.env.VUE_APP_TOKEN_KEY);
       this.$router.push("/login");
     },
     vivo50() {

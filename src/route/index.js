@@ -9,7 +9,7 @@ import notfound from "@/views/404.vue";
 import login from "@/views/login.vue";
 // import { Message } from "element-ui"; // ✅ 手动引入 Message 组件
 import { getCache } from "@/utils/useCache";
-
+import { socket } from "@/utils/websocket";
 Vue.use(VueRouter);
 
 const routes = [
@@ -37,7 +37,12 @@ router.beforeEach((to, from, next) => {
     next({ path: "/login" });
     // } else if (to.path === "/login" && isAuthenticated) {
     //   next({ path: "/login" });
-  } else next();
+  } else if (socket && socket.connected && from.path == "/room") {
+    socket.disconnect();
+    next();
+  } else {
+    next();
+  }
 });
 
 export default router;

@@ -7,7 +7,7 @@ import router from "@/route"; // 引入 Vue Router 实例（如果你需要跳�
 
 const http = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
   // headers: { "Content-Type": "application/json" },
 });
 
