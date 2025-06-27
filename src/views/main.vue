@@ -4,13 +4,13 @@
       <el-header>
         <el-menu
           mode="horizontal"
-          default-active="/home"
+          default-active="/index"
           class="el-menu-vertical-demo"
           @open="handleOpen"
           @close="handleClose"
           @select="jump"
         >
-          <el-menu-item index="/home">
+          <el-menu-item index="/index">
             <i class="el-icon-s-home"></i>
             <span slot="title">主页</span>
           </el-menu-item>

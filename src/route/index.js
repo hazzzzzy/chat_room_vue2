@@ -6,6 +6,7 @@ import home from "@/views/home.vue";
 import room from "@/views/room.vue";
 import main from "@/views/main.vue";
 import notfound from "@/views/404.vue";
+import index from "@/views/index.vue";
 import login from "@/views/login.vue";
 // import { Message } from "element-ui"; // ✅ 手动引入 Message 组件
 import { getCache } from "@/utils/useCache";
@@ -13,13 +14,14 @@ import { socket } from "@/utils/websocket";
 Vue.use(VueRouter);
 
 const routes = [
+  { path: "/", component: home },
   { path: "/login", component: login },
   {
     path: "/",
     component: main,
     children: [
-      { path: "/home", component: home },
       { path: "/room", component: room },
+      { path: "/index", component: index },
     ],
   },
   { path: "*", component: notfound },

@@ -73,7 +73,7 @@ export default {
             setCache(process.env.VUE_APP_USERID_KEY, r.data.userID);
             setCache(process.env.VUE_APP_TOKEN_KEY, r.data.token);
             Notify.success(`欢迎用户 ${r.data.username} ，吴浩贤除外`);
-            this.$router.push("/home");
+            this.$router.push("/room");
           })
           .catch((r) => {
             console.error(r);
