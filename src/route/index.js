@@ -8,7 +8,8 @@ import main from "@/views/main.vue";
 import notfound from "@/views/404.vue";
 import index from "@/views/index.vue";
 import login from "@/views/login.vue";
-// import { Message } from "element-ui"; // ✅ 手动引入 Message 组件
+import test from "@/views/test.vue";
+
 import { getCache } from "@/utils/useCache";
 import { socket } from "@/utils/websocket";
 Vue.use(VueRouter);
@@ -22,6 +23,7 @@ const routes = [
     children: [
       { path: "/room", component: room },
       { path: "/index", component: index },
+      { path: "/test", component: test },
     ],
   },
   { path: "*", component: notfound },

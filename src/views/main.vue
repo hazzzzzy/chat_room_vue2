@@ -3,6 +3,7 @@
     <el-container>
       <el-header>
         <el-menu
+          :collapse="isCollapse"
           mode="horizontal"
           default-active="/index"
           class="el-menu-vertical-demo"
@@ -18,21 +19,28 @@
             <i class="el-icon-s-comment"></i>
             <span slot="title">聊天室</span>
           </el-menu-item>
-          <!-- <el-menu-item index="2" @click="vivo50">
+          <el-menu-item index="/test">
             <i class="el-icon-setting"></i>
-            <span slot="title">改名</span>
+            <span slot="title">test</span>
           </el-menu-item>
-          <el-menu-item index="3" @click="logout">
+          <!-- <el-menu-item index="3" @click="logout">
             <i class="el-icon-setting"></i>
             <span slot="title">退出账号</span>
           </el-menu-item> -->
         </el-menu>
         <div id="avatar">
-          <el-dropdown @command="dropdown_command">
+          <el-avatar
+            shape="square"
+            size="medium"
+            src="/default_avatar.png"
+            class="squareAva"
+          ></el-avatar
+          ><el-dropdown @command="dropdown_command">
             <span class="el-dropdown-link">
               {{ username }}<i class="el-icon-arrow-down el-icon--right"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="editAvatar">更改头像</el-dropdown-item>
               <el-dropdown-item command="change">改名</el-dropdown-item>
               <el-dropdown-item command="logout">退出账号</el-dropdown-item>
             </el-dropdown-menu>
@@ -71,6 +79,13 @@
         </div>
       </el-image>
     </el-dialog>
+    <el-dialog title="改头像 - ￥99" :visible.sync="avaDialog">
+      <el-image src="/78f059519d37dd78422c4db6ae2a2b4.jpg">
+        <div slot="placeholder" class="">
+          加载中<span class="dot">...</span>
+        </div>
+      </el-image>
+    </el-dialog>
   </div>
 </template>
 
@@ -80,7 +95,9 @@ import Notify from "@/utils/notify";
 export default {
   data() {
     return {
+      isCollapse: false,
       vivo50Dialog: false,
+      avaDialog: false,
       username: getCache(process.env.VUE_APP_USERNAME_KEY),
     };
   },
@@ -102,11 +119,16 @@ export default {
     vivo50() {
       this.vivo50Dialog = true;
     },
+    editAVA() {
+      this.avaDialog = true;
+    },
     dropdown_command(c) {
       if (c === "logout") {
         this.logout();
       } else if (c === "change") {
         this.vivo50();
+      } else if (c === "editAvatar") {
+        this.editAVA();
       }
     },
   },
@@ -141,6 +163,9 @@ export default {
     .el-dropdown-link {
       cursor: pointer;
       color: #409eff;
+    }
+    .squareAva {
+      margin-right: 20px;
     }
   }
 }

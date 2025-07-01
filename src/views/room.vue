@@ -27,7 +27,7 @@
           class="empty-container"
           v-show="!room"
         ></el-empty>
-        <el-card
+        <!-- <el-card
           v-for="(msg, index) in messages"
           :key="index"
           shadow="always"
@@ -40,7 +40,31 @@
             <span>{{ msg.sender }} | {{ msg.sendTime }}</span>
           </div>
           {{ msg.msg }}
-        </el-card>
+        </el-card> -->
+        <div
+          class="msg-container"
+          v-for="(msg, index) in messages"
+          :key="index"
+        >
+          <div class="msg-ava">
+            <el-avatar
+              shape="square"
+              size="medium"
+              src="/default_avatar.png"
+            ></el-avatar>
+          </div>
+          <div class="msg-main">
+            <div class="msg-header">{{ msg.sender }} | {{ msg.sendTime }}</div>
+            <div
+              class="msg-content"
+              :style="{
+                'background-color': getMsgColor(msg.sender),
+              }"
+            >
+              {{ msg.msg }}
+            </div>
+          </div>
+        </div>
       </el-card>
       <el-card class="input-box" shadow="always" v-show="isConnect">
         <el-form
@@ -78,7 +102,6 @@ import http from "@/utils/r";
 export default {
   data() {
     return {
-      //   message: "",
       messages: [],
       isConnect: false,
       onlineUserAmount: 0,
@@ -91,6 +114,11 @@ export default {
       loading: {
         roomListLoading: false,
         historyLoading: false,
+      },
+      blink: {
+        timer: null,
+        originTitle: document.title,
+        state: null,
       },
     };
   },
@@ -112,14 +140,13 @@ export default {
   mounted() {
     this.getRoomList();
     // this.connWs();
+    document.addEventListener("visibilitychange", this.listenPage);
+  },
+  beforeDestroy() {
+    this.stopBlinkingTitle();
+    document.removeEventListener("visibilitychange", this.listenPage);
   },
   methods: {
-    // handleOpen(key, keyPath) {
-    //   console.log(key, keyPath);
-    // },
-    // handleClose(key, keyPath) {
-    //   console.log(key, keyPath);
-    // },
     async jump(key) {
       this.loading.roomListLoading = true;
       if (this.isConnect !== true) {
@@ -224,6 +251,9 @@ export default {
             sender: data.sender,
             sendTime: data.sendTime,
           });
+          if (document.hidden) {
+            this.startBlinkingTitle();
+          }
         });
         // 获取在线人数
         this.$socket.on("countUser", (data) => {
@@ -260,6 +290,28 @@ export default {
         return;
       }
     },
+    startBlinkingTitle() {
+      if (this.blink.timer) return;
+      this.blink.title = document.title;
+      this.blink.timer = setInterval(() => {
+        document.title = this.blink.state
+          ? "【新消息】"
+          : this.blink.originTitle;
+        this.blink.state = !this.blink.state;
+      }, 1000);
+    },
+    stopBlinkingTitle() {
+      if (this.blink.timer) {
+        clearInterval(this.blink.timer);
+        this.blink.timer = null;
+        document.title = this.blink.originTitle;
+      }
+    },
+    listenPage() {
+      if (!document.hidden) {
+        this.stopBlinkingTitle();
+      }
+    },
   },
 };
 </script>
@@ -279,14 +331,15 @@ export default {
     align-items: center;
   }
   .roomList {
-    width: 20%;
+    min-width: 200px;
+    width: 15%;
     .el-menu-vertical-demo {
       width: 100%;
       height: 100%;
     }
   }
   .msg-container {
-    width: 80%;
+    width: 85%;
     flex-direction: column;
     // justify-content: left;
     align-items: center;
@@ -310,7 +363,6 @@ export default {
       height: 70%;
       width: 95%;
       overflow-y: auto;
-      margin-bottom: 20px;
 
       .msg-ele {
         width: auto;
@@ -326,8 +378,48 @@ export default {
           padding: 10px;
         }
       }
+      .msg-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 20px;
+        min-height: 50px;
+        width: 100%;
+
+        .msg-ava {
+          margin-right: 20px;
+        }
+
+        .msg-main {
+          flex-direction: column;
+          width: 100%; // 注意：如果 msg-container 是整个聊天行的容器，这里设置 width: 100% 可能需要根据你的实际 HTML 结构和想要的效果进行调整
+
+          .msg-header {
+            font-size: 14px;
+          }
+
+          .msg-content {
+            // ***** 核心修改从这里开始 *****
+            display: inline-block; // 让气泡根据内容宽度自适应
+            max-width: 50%; // 限制气泡的最大宽度为父容器宽度的 50%
+            word-break: break-word; // 确保长文本能够正确换行
+            // ***** 核心修改到这里结束 *****
+
+            // border: 1px solid;
+            padding: 10px;
+            min-height: 20px;
+            line-height: 1.4;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); // 警告：box-shadow: 10px; 是不完整的 CSS 语法，通常需要颜色和模糊值，例如 box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 0 10px 10px 10px; // 注意：这个圆角只适合靠左的气泡
+            overflow-wrap: break-word; // 兼容性更好
+          }
+        }
+      }
     }
     .input-box {
+      margin-top: 20px;
       flex: 2;
       // height: 20%;
       width: 95%;
