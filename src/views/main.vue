@@ -7,8 +7,6 @@
           mode="horizontal"
           default-active="/index"
           class="el-menu-vertical-demo"
-          @open="handleOpen"
-          @close="handleClose"
           @select="jump"
         >
           <el-menu-item index="/index">

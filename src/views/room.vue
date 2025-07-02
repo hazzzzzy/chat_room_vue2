@@ -1,25 +1,23 @@
 <template>
   <div class="main">
     <div class="roomList" v-loading="loading.roomListLoading">
-      <el-menu
-        class="el-menu-vertical-demo"
-        @open="handleOpen"
-        @close="handleClose"
-        @select="jump"
-      >
+      <el-menu class="el-menu-vertical-demo" @select="jump" default-active="0">
         <el-menu-item v-for="room in rooms" :key="room.id" :index="room.id">
           <i class="el-icon-no-smoking"></i>
           <span slot="title">{{ room.id }} - {{ room.name }}</span>
         </el-menu-item>
       </el-menu>
     </div>
-    <div class="msg-container">
-      <el-card class="showStatus" v-show="isConnect">
+    <div class="main-container">
+      <el-card class="showStatus">
         连接状态：<span :style="{ color: isConnect ? 'green' : 'red' }">
-          {{ socketStatus }} </span
-        >| 当前房间在线人数：{{ onlineRoomUserAmount }} | 当前在线人数：{{
-          onlineUserAmount
-        }}
+          {{ socketStatus }}
+        </span>
+        <span v-show="isConnect"
+          >| 当前房间在线人数：{{ onlineRoomUserAmount }} | 当前在线人数：{{
+            onlineUserAmount
+          }}</span
+        >
       </el-card>
       <el-card class="msg-box" id="msgBox" v-loading="loading.historyLoading">
         <el-empty
@@ -27,46 +25,85 @@
           class="empty-container"
           v-show="!room"
         ></el-empty>
-        <!-- <el-card
-          v-for="(msg, index) in messages"
-          :key="index"
-          shadow="always"
-          class="msg-ele"
-          :style="{
-            'background-color': getMsgColor(msg.sender),
-          }"
-        >
-          <div slot="header" class="box-head">
-            <span>{{ msg.sender }} | {{ msg.sendTime }}</span>
-          </div>
-          {{ msg.msg }}
-        </el-card> -->
         <div
-          class="msg-container"
           v-for="(msg, index) in messages"
           :key="index"
+          :index="index"
+          class="msg-container-container"
         >
-          <div class="msg-ava">
-            <el-avatar
-              shape="square"
-              size="medium"
-              src="/default_avatar.png"
-            ></el-avatar>
+          <!-- 系统 -->
+          <div
+            :class="getHistorySource(msg.sender)"
+            v-if="msg.role === '系统消息'"
+          >
+            <div class="msg-main">
+              <div
+                class="msg-content"
+                :style="{
+                  'background-color': getMsgColor(msg.sender),
+                }"
+              >
+                {{ msg.msg }}
+              </div>
+            </div>
           </div>
-          <div class="msg-main">
-            <div class="msg-header">{{ msg.sender }} | {{ msg.sendTime }}</div>
-            <div
-              class="msg-content"
-              :style="{
-                'background-color': getMsgColor(msg.sender),
-              }"
-            >
-              {{ msg.msg }}
+          <!-- 本人 -->
+          <div
+            :class="getHistorySource(msg.sender)"
+            v-if="msg.sender === me[0]"
+          >
+            <div class="msg-main">
+              <div class="msg-header">
+                <div>{{ msg.sender }}</div>
+                <div>{{ msg.sendTime }}</div>
+              </div>
+              <div
+                class="msg-content"
+                :style="{
+                  'background-color': getMsgColor(msg.sender),
+                }"
+              >
+                {{ msg.msg }}
+              </div>
+            </div>
+            <div class="msg-ava">
+              <el-avatar
+                shape="square"
+                size="large"
+                src="/default_avatar.png"
+              ></el-avatar>
+            </div>
+          </div>
+          <!-- 他人 -->
+          <div
+            :class="getHistorySource(msg.sender)"
+            v-if="msg.sender !== me[0] && msg.role !== '系统消息'"
+          >
+            <div class="msg-ava">
+              <el-avatar
+                shape="square"
+                size="large"
+                src="/default_avatar.png"
+              ></el-avatar>
+            </div>
+            <div class="msg-main">
+              <div class="msg-header">
+                <div>{{ msg.sender }}</div>
+                <div>{{ msg.sendTime }}</div>
+              </div>
+              <div
+                class="msg-content"
+                :style="{
+                  'background-color': getMsgColor(msg.sender),
+                }"
+              >
+                {{ msg.msg }}
+              </div>
             </div>
           </div>
         </div>
       </el-card>
-      <el-card class="input-box" shadow="always" v-show="isConnect">
+      <el-card class="input-box" shadow="always">
         <el-form
           :model="msgForm"
           :inline="true"
@@ -81,14 +118,19 @@
             <el-input
               v-model="msgForm.message"
               @keyup.enter.native.prevent="submitForm('msgForm')"
+              :disabled="!isConnect"
             />
           </el-form-item>
           <el-form-item
-            ><el-button @click="submitForm('msgForm')" type="primary"
+            ><el-button
+              @click="submitForm('msgForm')"
+              type="primary"
+              :disabled="!isConnect"
               >发送</el-button
             >
           </el-form-item>
         </el-form>
+        <!-- <el-button @click="test">ces</el-button> -->
       </el-card>
     </div>
   </div>
@@ -120,6 +162,7 @@ export default {
         originTitle: document.title,
         state: null,
       },
+      me: null,
     };
   },
   computed: {
@@ -141,12 +184,16 @@ export default {
     this.getRoomList();
     // this.connWs();
     document.addEventListener("visibilitychange", this.listenPage);
+    this.me = getMyself();
   },
   beforeDestroy() {
     this.stopBlinkingTitle();
     document.removeEventListener("visibilitychange", this.listenPage);
   },
   methods: {
+    test() {
+      console.log(this.messages);
+    },
     async jump(key) {
       this.loading.roomListLoading = true;
       if (this.isConnect !== true) {
@@ -178,20 +225,20 @@ export default {
           this.loading.roomListLoading = false;
         });
     },
-    async getHistory() {
-      this.loading.historyLoading = true;
-      await http
-        .get("/rooms/getHistory", { params: { roomID: this.room } })
-        .then((data) => {
-          this.messages = data.data;
-        })
-        .catch((e) => {
-          console.error(e);
-        })
-        .finally(() => {
-          this.loading.historyLoading = false;
-        });
-    },
+    // async getHistory() {
+    //   this.loading.historyLoading = true;
+    //   await http
+    //     .get("/rooms/getHistory", { params: { roomID: this.room } })
+    //     .then((data) => {
+    //       this.messages = data.data;
+    //     })
+    //     .catch((e) => {
+    //       console.error(e);
+    //     })
+    //     .finally(() => {
+    //       this.loading.historyLoading = false;
+    //     });
+    // },
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
@@ -279,17 +326,19 @@ export default {
       // this.loading.roomListLoading = false;
     },
     getMsgColor(sender) {
-      const username = getMyself()[0];
+      const username = this.me[0];
       // console.log(sender, username);
 
-      if (sender === "系统消息") {
-        return "rgb(255, 255, 144)";
-      } else if (sender === username) {
+      // if (sender === "系统消息") {
+      //   return "rgb(255, 255, 144)";
+      // } else
+      if (sender === username) {
         return "rgb(149, 236, 105)";
       } else {
         return;
       }
     },
+    //
     startBlinkingTitle() {
       if (this.blink.timer) return;
       this.blink.title = document.title;
@@ -312,11 +361,20 @@ export default {
         this.stopBlinkingTitle();
       }
     },
+    getHistorySource(v) {
+      if (v == this.me[0]) {
+        return "msg-container self-msg-container";
+      } else if (v === "系统消息") {
+        return "msg-container system-msg-container";
+      } else if (v !== this.me[0]) {
+        return "msg-container other-msg-container";
+      }
+    },
   },
 };
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
 .main {
   width: 100%;
   height: 100%;
@@ -326,7 +384,6 @@ export default {
   align-items: center;
   > div {
     height: 100%;
-    display: flex;
     justify-content: center;
     align-items: center;
   }
@@ -338,20 +395,13 @@ export default {
       height: 100%;
     }
   }
-  .msg-container {
+  .main-container {
     width: 85%;
+    display: flex;
     flex-direction: column;
-    // justify-content: left;
-    align-items: center;
-    > div {
-      display: flex;
-    }
-    .el-card__body {
-      width: 100%;
-    }
-    .empty-container {
-      width: 100%;
-    }
+    // justify-content: center;
+    // align-items: center;
+
     .showStatus {
       flex: 1;
       text-align: center;
@@ -363,67 +413,93 @@ export default {
       height: 70%;
       width: 95%;
       overflow-y: auto;
+      // display: flex;
+      // flex-direction: column;
+      // align-items: center;
 
-      .msg-ele {
-        width: auto;
-        margin-bottom: 10px;
-        word-break: break-word; /* 单词换行 */
-        //   white-space: normal; /* 默认换行 */
-        .el-card__header {
-          font-size: 12px;
-          height: 30px;
-          padding: 5px;
-        }
-        .el-card__body {
-          padding: 10px;
-        }
-      }
-      .msg-container {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-        margin-bottom: 20px;
-        min-height: 50px;
-        width: 100%;
-
-        .msg-ava {
-          margin-right: 20px;
-        }
-
-        .msg-main {
-          flex-direction: column;
-          width: 100%; // 注意：如果 msg-container 是整个聊天行的容器，这里设置 width: 100% 可能需要根据你的实际 HTML 结构和想要的效果进行调整
-
-          .msg-header {
-            font-size: 14px;
+      .msg-container-container {
+        .msg-container {
+          display: flex;
+          flex-direction: row;
+          margin-bottom: 20px;
+          width: 100%;
+          transition: 1s;
+          .msg-ava {
+            margin-right: 10px;
           }
-
-          .msg-content {
-            // ***** 核心修改从这里开始 *****
-            display: inline-block; // 让气泡根据内容宽度自适应
-            max-width: 50%; // 限制气泡的最大宽度为父容器宽度的 50%
-            word-break: break-word; // 确保长文本能够正确换行
-            // ***** 核心修改到这里结束 *****
-
-            // border: 1px solid;
-            padding: 10px;
-            min-height: 20px;
-            line-height: 1.4;
-            position: relative;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); // 警告：box-shadow: 10px; 是不完整的 CSS 语法，通常需要颜色和模糊值，例如 box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            border-radius: 0 10px 10px 10px; // 注意：这个圆角只适合靠左的气泡
-            overflow-wrap: break-word; // 兼容性更好
+          .msg-main {
+            width: 100%; // 注意：如果 msg-container 是整个聊天行的容器，这里设置 width: 100% 可能需要根据你的实际 HTML 结构和想要的效果进行调整
+            display: flex;
+            flex-direction: column;
+            .msg-header {
+              font-size: 12px;
+              padding: 2px;
+            }
+            .msg-content {
+              display: inline-block; /* 核心：根据内容自适应宽度 */
+              max-width: 70%; /* 最宽不超过容器的一半 */
+              padding: 10px;
+              min-height: 20px;
+              line-height: 1.4;
+              position: relative;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+              overflow-wrap: break-word; /* 中文换行 */
+              word-break: break-word; /* 英文换行 */
+            }
+          }
+          &.other-msg-container {
+            .msg-main {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start;
+              .msg-header {
+                text-align: left;
+              }
+              .msg-content {
+                border-radius: 0 10px 10px 10px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+              }
+            }
+          }
+          &.self-msg-container {
+            .msg-ava {
+              margin-right: 0px;
+              margin-left: 10px;
+            }
+            .msg-main {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              .msg-header {
+                text-align: right;
+              }
+              .msg-content {
+                border-radius: 10px 0px 10px 10px;
+              }
+            }
+          }
+          &.system-msg-container {
+            .msg-main {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              .msg-content {
+                border: none;
+                box-shadow: none;
+                color: rgb(126, 128, 136);
+              }
+            }
           }
         }
       }
     }
     .input-box {
+      display: flex;
       margin-top: 20px;
       flex: 2;
       // height: 20%;
       width: 95%;
-      color: rgb(rgb(91, 205, 10), green, blue);
+      color: rgb(91, 205, 10);
     }
   }
 }
