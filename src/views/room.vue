@@ -2,22 +2,28 @@
   <div class="main">
     <div class="roomList" v-loading="loading.roomListLoading">
       <el-menu class="el-menu-vertical-demo" @select="jump" default-active="0">
-        <el-menu-item v-for="room in rooms" :key="room.id" :index="room.id">
+        <el-menu-item
+          v-for="room in rooms"
+          :key="room.id"
+          :index="String(room.id)"
+        >
           <i class="el-icon-no-smoking"></i>
           <span slot="title">{{ room.id }} - {{ room.name }}</span>
         </el-menu-item>
       </el-menu>
     </div>
     <div class="main-container">
-      <el-card class="showStatus">
-        连接状态：<span :style="{ color: isConnect ? 'green' : 'red' }">
-          {{ socketStatus }}
-        </span>
-        <span v-show="isConnect"
-          >| 当前房间在线人数：{{ onlineRoomUserAmount }} | 当前在线人数：{{
-            onlineUserAmount
-          }}</span
-        >
+      <el-card class="showStatus"
+        ><div>
+          连接状态：<span :style="{ color: isConnect ? 'green' : 'red' }">
+            {{ socketStatus }}
+          </span>
+          <span v-show="isConnect"
+            >| 当前房间在线人数：{{ onlineRoomUserAmount }} | 当前在线人数：{{
+              onlineUserAmount
+            }}</span
+          >
+        </div>
       </el-card>
       <el-card class="msg-box" id="msgBox" v-loading="loading.historyLoading">
         <el-empty
@@ -25,6 +31,18 @@
           class="empty-container"
           v-show="!room"
         ></el-empty>
+        <!-- <el-button
+          type="primary"
+          @click="loadMoreHistory"
+          v-show="isConnect && countCurrentMsg() < this.roomMessageAmount"
+          >加载更多历史记录
+        </el-button> -->
+        <div
+          class="isHistoryRemain"
+          v-show="isConnect && countCurrentMsg() < this.roomMessageAmount"
+        >
+          ————上划加载历史消息————
+        </div>
         <div
           v-for="(msg, index) in messages"
           :key="index"
@@ -103,13 +121,29 @@
           </div>
         </div>
       </el-card>
-      <el-card class="input-box" shadow="always">
+      <el-card
+        class="input-box"
+        shadow="always"
+        v-show="isConnect"
+        :body-style="{
+          display: 'flex',
+          'flex-direction': 'row',
+          'justify-content': 'flex-start',
+          'align-items': 'center',
+          padding: 0,
+          height: '100%',
+        }"
+      >
+        <div class="emojiPicker" @click="handleEmoji">😋</div>
+        <div class="emoji" v-show="emoji" @mouseleave="handleEmoji">
+          <VEmojiPicker @select="selectEmoji" />
+        </div>
         <el-form
           :model="msgForm"
           :inline="true"
           @submit.native.prevent
-          style="width: 100%"
           ref="msgForm"
+          class="input-form-class"
         >
           <el-form-item
             prop="message"
@@ -140,10 +174,15 @@
 import Notify from "@/utils/notify";
 import { getCache, getMyself } from "@/utils/useCache";
 import http from "@/utils/r";
+import { VEmojiPicker } from "v-emoji-picker";
 
 export default {
+  components: {
+    VEmojiPicker,
+  },
   data() {
     return {
+      roomMessageAmount: 0,
       messages: [],
       isConnect: false,
       onlineUserAmount: 0,
@@ -163,6 +202,9 @@ export default {
         state: null,
       },
       me: null,
+      fangdou: false,
+      sendMsgfangdou: false,
+      emoji: false,
     };
   },
   computed: {
@@ -170,30 +212,40 @@ export default {
       return this.isConnect ? "已连接" : "未连接";
     },
   },
-  watch: {
-    messages() {
-      this.$nextTick(() => {
-        const box = document.getElementById("msgBox");
-        if (box) {
-          box.scrollTop = box.scrollHeight;
-        }
-      });
-    },
-  },
+  // watch: {
+  //   messages() {
+  //     this.$nextTick(() => {
+  //       const box = document.getElementById("msgBox");
+  //       if (box) {
+  //         box.scrollTop = box.scrollHeight;
+  //       }
+  //     });
+  //   },
+  // },
   mounted() {
     this.getRoomList();
-    // this.connWs();
-    document.addEventListener("visibilitychange", this.listenPage);
     this.me = getMyself();
+    document.addEventListener("visibilitychange", this.listenPage);
+
+    const box = document.getElementById("msgBox");
+    if (box) {
+      box.addEventListener("scroll", this.handleScroll);
+    }
   },
   beforeDestroy() {
     this.stopBlinkingTitle();
     document.removeEventListener("visibilitychange", this.listenPage);
+
+    const box = document.getElementById("msgBox");
+    if (box) {
+      box.removeEventListener("scroll", this.handleScroll);
+    }
   },
   methods: {
-    test() {
-      console.log(this.messages);
-    },
+    // test() {
+    //   const box = document.getElementById("msgBox");
+    //   console.log(box.scrollTop);
+    // },
     async jump(key) {
       this.loading.roomListLoading = true;
       if (this.isConnect !== true) {
@@ -240,44 +292,33 @@ export default {
     //     });
     // },
     submitForm(formName) {
+      if (this.sendMsgfangdou === true) {
+        Notify.warning("发消息过于频繁");
+        return;
+      }
       this.$refs[formName].validate((valid) => {
         if (valid) {
           this.$socket.emit("serverSendMsg", this.msgForm.message);
           this.msgForm.message = "";
+          this.roomMessageAmount += 1;
+          this.$nextTick(() => {
+            const box = document.getElementById("msgBox");
+            if (box) {
+              box.scrollTop = box.scrollHeight;
+            }
+          });
         }
       });
+      this.sendMsgfangdou = true;
+      setTimeout(() => {
+        this.sendMsgfangdou = false;
+      }, 3000);
     },
-    // addNewUser() {
-    //   if (getCache("crUsername") == null) {
-    //     this.$prompt("输入用户名", "", {
-    //       showClose: false,
-    //       showCancelButton: false,
-    //       closeOnClickModal: false,
-    //       closeOnPressEscape: false,
-    //       showInput: true,
-    //       confirmButtonText: "保存",
-    //       inputValidator: (v) => {
-    //         const vL = v.length;
-    //         if (!vL) {
-    //           return "用户名不可为空";
-    //         } else if (vL < 4 || vL > 8) {
-    //           return "用户名长度需为4至8";
-    //         }
-    //         return true;
-    //       },
-    //     }).then((v) => {
-    //       setCache("crUsername", v.value);
-    //       this.connWs();
-    //       Notify.success(`欢迎，${localStorage.getItem("crUsername")}`);
-    //     });
-    //   }
-    // },
     connWs() {
       const username = getCache(process.env.VUE_APP_USERNAME_KEY);
       if (username) {
         this.$createWs();
         this.$socket = this.$getSocket();
-        // this.$socket.emit("getRoomList");
         // 成功连接
         this.$socket.on("connect", () => {
           this.$socket.emit("serverOnline", username);
@@ -298,9 +339,17 @@ export default {
             sender: data.sender,
             sendTime: data.sendTime,
           });
-          if (document.hidden) {
+          console.log(data);
+
+          if (document.hidden && data.role !== "系统消息") {
             this.startBlinkingTitle();
           }
+          this.$nextTick(() => {
+            const box = document.getElementById("msgBox");
+            if (box) {
+              box.scrollTop = box.scrollHeight;
+            }
+          });
         });
         // 获取在线人数
         this.$socket.on("countUser", (data) => {
@@ -317,7 +366,27 @@ export default {
         });
         // 接收历史消息
         this.$socket.on("clientGetHistory", (data) => {
-          this.messages = data;
+          this.messages = data.history;
+          this.roomMessageAmount = data.roomMessageAmount;
+          this.$nextTick(() => {
+            const box = document.getElementById("msgBox");
+            if (box) {
+              box.scrollTop = box.scrollHeight;
+            }
+          });
+        });
+        // 接收更多历史消息
+        this.$socket.on("clientLoadMoreHistory", (data) => {
+          const chatContainer = document.getElementById("msgBox");
+          const oldScrollHeight = chatContainer.scrollHeight;
+          this.messages = data.history.concat(this.messages);
+          // 等待DOM更新完成（如果用React/Vue等框架可能需要nextTick或setTimeout）
+          this.$nextTick(() => {
+            const chatContainer = document.getElementById("msgBox");
+            const newScrollHeight = chatContainer.scrollHeight;
+            const addedHeight = newScrollHeight - oldScrollHeight;
+            chatContainer.scrollTop = addedHeight;
+          });
         });
       } else {
         Notify.error("未检测到登录态，请重新登录");
@@ -325,20 +394,7 @@ export default {
       }
       // this.loading.roomListLoading = false;
     },
-    getMsgColor(sender) {
-      const username = this.me[0];
-      // console.log(sender, username);
-
-      // if (sender === "系统消息") {
-      //   return "rgb(255, 255, 144)";
-      // } else
-      if (sender === username) {
-        return "rgb(149, 236, 105)";
-      } else {
-        return;
-      }
-    },
-    //
+    // 新消息标签页闪烁
     startBlinkingTitle() {
       if (this.blink.timer) return;
       this.blink.title = document.title;
@@ -361,6 +417,15 @@ export default {
         this.stopBlinkingTitle();
       }
     },
+    // 获取聊天气泡样式
+    getMsgColor(sender) {
+      const username = this.me[0];
+      if (sender === username) {
+        return "rgb(149, 236, 105)";
+      } else {
+        return;
+      }
+    },
     getHistorySource(v) {
       if (v == this.me[0]) {
         return "msg-container self-msg-container";
@@ -369,6 +434,64 @@ export default {
       } else if (v !== this.me[0]) {
         return "msg-container other-msg-container";
       }
+    },
+    //加载更多历史数据
+    countCurrentMsg() {
+      let msgAmount = 0;
+      const ls = this.messages;
+      if (ls.length == 0) {
+        return 0;
+      } else {
+        for (let i = 0; i < ls.length; i++) {
+          const item = ls[i];
+          if (item && typeof item === "object" && "id" in item) {
+            msgAmount += 1;
+          }
+        }
+        return msgAmount;
+      }
+    },
+    loadMoreHistory() {
+      const msgs = this.messages;
+      let historyID = null;
+      for (let i = 0; i < this.messages.length; i++) {
+        const item = msgs[i];
+        if (item && typeof item === "object" && "id" in item) {
+          historyID = item.id;
+          break;
+        }
+      }
+      if (historyID) {
+        this.$socket.emit("serverLoadMoreHistory", {
+          historyID: historyID,
+          roomID: this.room,
+        });
+      }
+    },
+    handleScroll() {
+      const box = document.getElementById("msgBox");
+      if (
+        this.fangdou === true ||
+        this.countCurrentMsg() >= this.roomMessageAmount ||
+        !box ||
+        box.scrollTop !== 0
+      ) {
+        return;
+      }
+      this.loadMoreHistory();
+      this.fangdou = true;
+      setTimeout(() => {
+        this.fangdou = false;
+      }, 1000);
+    },
+    //emoji
+    handleEmoji() {
+      this.emoji = !this.emoji;
+    },
+    selectEmoji(v) {
+      console.log(v);
+
+      this.msgForm.message += v.data;
     },
   },
 };
@@ -407,6 +530,10 @@ export default {
       text-align: center;
       width: 95%;
       margin-bottom: 20px;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
     }
     .msg-box {
       flex: 8;
@@ -416,13 +543,19 @@ export default {
       // display: flex;
       // flex-direction: column;
       // align-items: center;
-
+      .isHistoryRemain {
+        color: rgb(126, 128, 136);
+        font-size: 14px;
+        text-align: center;
+        width: 100%;
+      }
       .msg-container-container {
         .msg-container {
           display: flex;
           flex-direction: row;
           margin-bottom: 20px;
           width: 100%;
+          font-size: 14px;
           transition: 1s;
           .msg-ava {
             margin-right: 10px;
@@ -494,12 +627,35 @@ export default {
       }
     }
     .input-box {
-      display: flex;
       margin-top: 20px;
-      flex: 2;
+      flex: 1;
       // height: 20%;
       width: 95%;
       color: rgb(91, 205, 10);
+      .input-form-class {
+        display: flex;
+        flex-direction: row;
+        // justify-content: center;
+        align-items: center;
+      }
+      .el-form-item {
+        margin-bottom: 0;
+      }
+      .emojiPicker {
+        border-radius: 5px;
+        min-width: 40px;
+        min-height: 40px;
+        margin-left: 10px;
+        margin-right: 5px;
+        font-size: 24px;
+        text-align: center;
+        cursor: pointer;
+      }
+      .emoji {
+        position: absolute;
+        z-index: 2;
+        bottom: 100px;
+      }
     }
   }
 }
