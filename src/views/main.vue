@@ -17,10 +17,10 @@
             <i class="el-icon-s-comment"></i>
             <span slot="title">聊天室</span>
           </el-menu-item>
-          <el-menu-item index="/test">
+          <!-- <el-menu-item index="/test">
             <i class="el-icon-setting"></i>
             <span slot="title">test</span>
-          </el-menu-item>
+          </el-menu-item> -->
           <!-- <el-menu-item index="3" @click="logout">
             <i class="el-icon-setting"></i>
             <span slot="title">退出账号</span>

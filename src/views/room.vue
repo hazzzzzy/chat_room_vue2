@@ -328,7 +328,6 @@ export default {
         // 断开连接
         this.$socket.on("disconnect", (reason) => {
           this.isConnect = false;
-          console.log(reason);
           Notify.info("已断开连接");
         });
         // 获取广播消息
@@ -339,8 +338,6 @@ export default {
             sender: data.sender,
             sendTime: data.sendTime,
           });
-          console.log(data);
-
           if (document.hidden && data.role !== "系统消息") {
             this.startBlinkingTitle();
           }
@@ -377,22 +374,25 @@ export default {
         });
         // 接收更多历史消息
         this.$socket.on("clientLoadMoreHistory", (data) => {
-          const chatContainer = document.getElementById("msgBox");
-          const oldScrollHeight = chatContainer.scrollHeight;
-          this.messages = data.history.concat(this.messages);
-          // 等待DOM更新完成（如果用React/Vue等框架可能需要nextTick或setTimeout）
-          this.$nextTick(() => {
+          try {
             const chatContainer = document.getElementById("msgBox");
-            const newScrollHeight = chatContainer.scrollHeight;
-            const addedHeight = newScrollHeight - oldScrollHeight;
-            chatContainer.scrollTop = addedHeight;
-          });
+            const oldScrollHeight = chatContainer.scrollHeight;
+            this.messages = data.history.concat(this.messages);
+            // 等待DOM更新完成（如果用React/Vue等框架可能需要nextTick或setTimeout）
+            this.$nextTick(() => {
+              const chatContainer = document.getElementById("msgBox");
+              const newScrollHeight = chatContainer.scrollHeight;
+              const addedHeight = newScrollHeight - oldScrollHeight;
+              chatContainer.scrollTop = addedHeight;
+            });
+          } finally {
+            this.loading.historyLoading = false;
+          }
         });
       } else {
         Notify.error("未检测到登录态，请重新登录");
         this.$router.push("/login");
       }
-      // this.loading.roomListLoading = false;
     },
     // 新消息标签页闪烁
     startBlinkingTitle() {
@@ -452,20 +452,26 @@ export default {
       }
     },
     loadMoreHistory() {
-      const msgs = this.messages;
-      let historyID = null;
-      for (let i = 0; i < this.messages.length; i++) {
-        const item = msgs[i];
-        if (item && typeof item === "object" && "id" in item) {
-          historyID = item.id;
-          break;
+      try {
+        this.loading.historyLoading = true;
+        const msgs = this.messages;
+        let historyID = null;
+        for (let i = 0; i < this.messages.length; i++) {
+          const item = msgs[i];
+          if (item && typeof item === "object" && "id" in item) {
+            historyID = item.id;
+            break;
+          }
         }
-      }
-      if (historyID) {
-        this.$socket.emit("serverLoadMoreHistory", {
-          historyID: historyID,
-          roomID: this.room,
-        });
+        if (historyID) {
+          this.$socket.emit("serverLoadMoreHistory", {
+            historyID: historyID,
+            roomID: this.room,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
       }
     },
     handleScroll() {
@@ -489,8 +495,6 @@ export default {
       this.emoji = !this.emoji;
     },
     selectEmoji(v) {
-      console.log(v);
-
       this.msgForm.message += v.data;
     },
   },

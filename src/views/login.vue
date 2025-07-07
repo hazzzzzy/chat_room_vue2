@@ -1,6 +1,5 @@
 <template>
-  <div class="main" :style="{ backgroundImage: `url('/bg.jpg')` }">
-    <!-- <ParticlesBackground /> -->
+  <div class="main">
     <el-card class="loginElement" shadow="hover">
       <h3>欢迎使用浩贤聊天室</h3>
       <el-form
@@ -87,14 +86,24 @@ export default {
 <style lang="less" scoped>
 .main {
   width: 100%;
-  height: 100%; /* 确保父容器填充整个屏幕 */
+  height: 100%; /* Ensure the parent container fills the entire screen */
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
-  // background-image: url("/GITB0AJa0AA_7dK.jpg"); /* 直接从 public 目录加载 */
-  background-size: cover;
-  background-position: center;
+
+  /* NEW BACKGROUND STYLES START */
+  background: linear-gradient(
+    135deg,
+    #7f7fd3,
+    #86a8e7,
+    #91eae4,
+    #86e7ad,
+    #86e7a6
+  ); /* A soothing blue/purple gradient */
+  background-size: 400% 400%; /* Make the gradient larger than the viewport for animation */
+  animation: gradientAnimation 10s ease infinite; /* Subtle animation */
+  /* NEW BACKGROUND STYLES END */
 
   h3 {
     margin-top: 0;
@@ -103,46 +112,26 @@ export default {
 
   .loginElement {
     margin-right: 100px;
-
     display: flex;
     flex-direction: column;
-    // justify-content: center;
-    // align-items: center;
     text-align: center;
-    // padding: 10px;
-    max-width: 300px; /* 让登录框有最小宽度，避免太窄 */
-    max-height: 300px; /* 让登录框有最小宽度，避免太窄 */
-    background: rgba(255, 255, 255, 0.5); /* 透明背景 */
-    backdrop-filter: blur(10px); /* 毛玻璃效果 */
-
-    // .demo-form-inline {
-    //   display: flex;
-    //   flex-direction: column;
-    //   justify-content: center;
-    //   align-items: center;
-    // }
+    min-width: 300px; /* Ensure the login box has a minimum width */
+    min-height: 300px; /* Ensure the login box has a minimum height */
+    background: rgba(255, 255, 255, 0.5); /* Transparent background */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
   }
 }
 
-.loginElement {
-  margin-right: 100px;
-
-  display: flex;
-  flex-direction: column;
-  // justify-content: center;
-  // align-items: center;
-  text-align: center;
-  // padding: 10px;
-  min-width: 300px; /* 让登录框有最小宽度，避免太窄 */
-  min-height: 300px; /* 让登录框有最小宽度，避免太窄 */
-  background: rgba(255, 255, 255, 0.5); /* 透明背景 */
-  backdrop-filter: blur(10px); /* 毛玻璃效果 */
-
-  // .demo-form-inline {
-  //   display: flex;
-  //   flex-direction: column;
-  //   justify-content: center;
-  //   align-items: center;
-  // }
+/* Keyframes for the gradient animation */
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>

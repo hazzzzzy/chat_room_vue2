@@ -21,9 +21,9 @@ const routes = [
     path: "/",
     component: main,
     children: [
-      { path: "/room", component: room },
       { path: "/index", component: index },
-      { path: "/test", component: test },
+      { path: "/room", component: room },
+      // { path: "/test", component: test },
     ],
   },
   { path: "*", component: notfound },
