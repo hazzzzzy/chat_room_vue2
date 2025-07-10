@@ -23,7 +23,7 @@ const routes = [
     children: [
       { path: "/index", component: index },
       { path: "/room", component: room },
-      // { path: "/test", component: test },
+      { path: "/test", component: test },
     ],
   },
   { path: "*", component: notfound },
@@ -36,7 +36,7 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   let isAuthenticated = getCache(process.env.VUE_APP_TOKEN_KEY);
-  if (to.path !== "/login" && !isAuthenticated) {
+  if (to.path !== "/login" && !isAuthenticated && to.path != "/") {
     Notify.error("检测到用户未登录，请登录后使用");
     next({ path: "/login" });
     // } else if (to.path === "/login" && isAuthenticated) {

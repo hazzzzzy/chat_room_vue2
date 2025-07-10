@@ -1,7 +1,9 @@
 <template>
   <div class="main">
+    <!-- 新增 ChatWave 标题 -->
+    <div class="title">ChatWave</div>
     <el-card class="loginElement" shadow="hover">
-      <h3>欢迎使用浩贤聊天室</h3>
+      <h3>欢迎使用ChatWave</h3>
       <el-form
         :model="loginForm"
         :rules="rules"
@@ -71,7 +73,8 @@ export default {
             setCache(process.env.VUE_APP_USERNAME_KEY, r.data.username);
             setCache(process.env.VUE_APP_USERID_KEY, r.data.userID);
             setCache(process.env.VUE_APP_TOKEN_KEY, r.data.token);
-            Notify.success(`欢迎用户 ${r.data.username} ，吴浩贤除外`);
+            setCache(process.env.VUE_APP_AVATAR_KEY, r.data.avatar);
+            Notify.success(`欢迎，${r.data.username}`);
             this.$router.push("/room");
           })
           .catch((r) => {
@@ -91,26 +94,27 @@ export default {
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
+  z-index: 1; // 内容位于上层
 
-  /* NEW BACKGROUND STYLES START */
-  background: linear-gradient(
-    135deg,
-    #7f7fd3,
-    #86a8e7,
-    #91eae4,
-    #86e7ad,
-    #86e7a6
-  ); /* A soothing blue/purple gradient */
-  background-size: 400% 400%; /* Make the gradient larger than the viewport for animation */
-  animation: gradientAnimation 10s ease infinite; /* Subtle animation */
-  /* NEW BACKGROUND STYLES END */
-
-  h3 {
-    margin-top: 0;
-    margin-bottom: 30px;
+  .title {
+    position: absolute;
+    top: 50%;
+    left: 25%; /* 左半边中心 */
+    transform: translate(-50%, -50%);
+    font-size: 100px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    font-family: "Segoe UI", sans-serif;
+    user-select: none;
+    pointer-events: none;
   }
 
   .loginElement {
+    h3 {
+      margin-top: 0;
+      margin-bottom: 30px;
+    }
     margin-right: 100px;
     display: flex;
     flex-direction: column;
@@ -121,17 +125,44 @@ export default {
     backdrop-filter: blur(10px); /* Frosted glass effect */
   }
 }
-
+.main::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1; // 背景在下面
+  background: linear-gradient(
+    135deg,
+    #7f7fd3,
+    #86a8e7,
+    #91eae4,
+    #86e7ad,
+    #86e7a6
+  );
+  background-size: 400% 400%;
+  animation: gradientAnimation 10s ease infinite, hueRotate 20s linear infinite;
+}
 /* Keyframes for the gradient animation */
 @keyframes gradientAnimation {
   0% {
-    background-position: 0% 50%;
+    background-position: 0% 0%;
   }
   50% {
-    background-position: 100% 50%;
+    background-position: 100% 100%;
   }
   100% {
-    background-position: 0% 50%;
+    background-position: 0% 0%;
+  }
+}
+
+@keyframes hueRotate {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
   }
 }
 </style>

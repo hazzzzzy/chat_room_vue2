@@ -13,8 +13,8 @@
       </el-menu>
     </div>
     <div class="main-container">
-      <el-card class="showStatus"
-        ><div>
+      <el-card class="showStatus">
+        <div>
           连接状态：<span :style="{ color: isConnect ? 'green' : 'red' }">
             {{ socketStatus }}
           </span>
@@ -25,7 +25,12 @@
           >
         </div>
       </el-card>
-      <el-card class="msg-box" id="msgBox" v-loading="loading.historyLoading">
+      <el-card
+        class="msg-box"
+        id="msgBox"
+        v-loading="loading.historyLoading"
+        :class="{ 'no-scroll': loading.historyLoading }"
+      >
         <el-empty
           description="请选择房间"
           class="empty-container"
@@ -58,7 +63,7 @@
               <div
                 class="msg-content"
                 :style="{
-                  'background-color': getMsgColor(msg.sender),
+                  'background-color': getMsgColor(msg.senderID),
                 }"
               >
                 {{ msg.msg }}
@@ -67,8 +72,8 @@
           </div>
           <!-- 本人 -->
           <div
-            :class="getHistorySource(msg.sender)"
-            v-if="msg.sender === me[0]"
+            :class="getHistorySource(msg.senderID)"
+            v-if="msg.senderID === me.userID"
           >
             <div class="msg-main">
               <div class="msg-header">
@@ -78,7 +83,7 @@
               <div
                 class="msg-content"
                 :style="{
-                  'background-color': getMsgColor(msg.sender),
+                  'background-color': getMsgColor(msg.senderID),
                 }"
               >
                 {{ msg.msg }}
@@ -88,20 +93,20 @@
               <el-avatar
                 shape="square"
                 size="large"
-                src="/default_avatar.png"
+                :src="getAvatar(msg.senderID)"
               ></el-avatar>
             </div>
           </div>
           <!-- 他人 -->
           <div
-            :class="getHistorySource(msg.sender)"
-            v-if="msg.sender !== me[0] && msg.role !== '系统消息'"
+            :class="getHistorySource(msg.senderID)"
+            v-if="msg.senderID !== me.userID && msg.role !== '系统消息'"
           >
             <div class="msg-ava">
               <el-avatar
                 shape="square"
                 size="large"
-                src="/default_avatar.png"
+                :src="getAvatar(msg.senderID)"
               ></el-avatar>
             </div>
             <div class="msg-main">
@@ -112,7 +117,7 @@
               <div
                 class="msg-content"
                 :style="{
-                  'background-color': getMsgColor(msg.sender),
+                  'background-color': getMsgColor(msg.senderID),
                 }"
               >
                 {{ msg.msg }}
@@ -172,7 +177,7 @@
 
 <script>
 import Notify from "@/utils/notify";
-import { getCache, getMyself } from "@/utils/useCache";
+import { getCache, getMyself, setCache } from "@/utils/useCache";
 import http from "@/utils/r";
 import { VEmojiPicker } from "v-emoji-picker";
 
@@ -205,6 +210,7 @@ export default {
       fangdou: false,
       sendMsgfangdou: false,
       emoji: false,
+      avatarList: getCache(process.env.VUE_APP_AVATAR_KEY),
     };
   },
   computed: {
@@ -242,10 +248,9 @@ export default {
     }
   },
   methods: {
-    // test() {
-    //   const box = document.getElementById("msgBox");
-    //   console.log(box.scrollTop);
-    // },
+    test() {
+      console.log(this.avatarList);
+    },
     async jump(key) {
       this.loading.roomListLoading = true;
       if (this.isConnect !== true) {
@@ -257,8 +262,8 @@ export default {
       }
       this.$socket.emit("serverJoinRoom", {
         roomID: key,
-        username: getMyself()[0],
-        userID: getMyself()[1],
+        username: this.me.username,
+        userID: this.me.userID,
       });
       this.room = key;
       this.messages = [];
@@ -268,7 +273,8 @@ export default {
       await http
         .get("/rooms/getList")
         .then((data) => {
-          this.rooms = data.data;
+          this.rooms = data.data.room;
+          setCache(process.env.VUE_APP_AVATAR_KEY, data.data.avatarList);
         })
         .catch((e) => {
           console.error(e);
@@ -277,20 +283,6 @@ export default {
           this.loading.roomListLoading = false;
         });
     },
-    // async getHistory() {
-    //   this.loading.historyLoading = true;
-    //   await http
-    //     .get("/rooms/getHistory", { params: { roomID: this.room } })
-    //     .then((data) => {
-    //       this.messages = data.data;
-    //     })
-    //     .catch((e) => {
-    //       console.error(e);
-    //     })
-    //     .finally(() => {
-    //       this.loading.historyLoading = false;
-    //     });
-    // },
     submitForm(formName) {
       if (this.sendMsgfangdou === true) {
         Notify.warning("发消息过于频繁");
@@ -336,6 +328,7 @@ export default {
             role: data.role,
             msg: data.msg,
             sender: data.sender,
+            senderID: data.senderID,
             sendTime: data.sendTime,
           });
           if (document.hidden && data.role !== "系统消息") {
@@ -418,20 +411,20 @@ export default {
       }
     },
     // 获取聊天气泡样式
-    getMsgColor(sender) {
-      const username = this.me[0];
-      if (sender === username) {
+    getMsgColor(senderID) {
+      const userID = this.me.userID;
+      if (senderID === userID) {
         return "rgb(149, 236, 105)";
       } else {
         return;
       }
     },
     getHistorySource(v) {
-      if (v == this.me[0]) {
+      if (v == this.me.userID) {
         return "msg-container self-msg-container";
       } else if (v === "系统消息") {
         return "msg-container system-msg-container";
-      } else if (v !== this.me[0]) {
+      } else if (v !== this.me.userID) {
         return "msg-container other-msg-container";
       }
     },
@@ -453,7 +446,6 @@ export default {
     },
     loadMoreHistory() {
       try {
-        this.loading.historyLoading = true;
         const msgs = this.messages;
         let historyID = null;
         for (let i = 0; i < this.messages.length; i++) {
@@ -471,13 +463,14 @@ export default {
         }
       } catch (e) {
         console.error(e);
-      } finally {
+        this.loading.historyLoading = false;
       }
     },
     handleScroll() {
       const box = document.getElementById("msgBox");
       if (
         this.fangdou === true ||
+        this.countCurrentMsg() + this.roomMessageAmount === 0 ||
         this.countCurrentMsg() >= this.roomMessageAmount ||
         !box ||
         box.scrollTop !== 0
@@ -496,6 +489,12 @@ export default {
     },
     selectEmoji(v) {
       this.msgForm.message += v.data;
+    },
+    //获取消息头像
+    getAvatar(userID) {
+      return this.avatarList[userID]
+        ? this.avatarList[userID]
+        : "/default_avatar.png";
     },
   },
 };
@@ -553,6 +552,7 @@ export default {
         text-align: center;
         width: 100%;
       }
+
       .msg-container-container {
         .msg-container {
           display: flex;
@@ -660,6 +660,10 @@ export default {
         z-index: 2;
         bottom: 100px;
       }
+    }
+    .no-scroll {
+      overflow: hidden !important; /* 禁止滚动条 */
+      pointer-events: none; /* 禁止鼠标滚动、拖动等交互 */
     }
   }
 }

@@ -5,14 +5,14 @@
         <el-menu
           :collapse="isCollapse"
           mode="horizontal"
-          default-active="/index"
+          default-active="/room"
           class="el-menu-vertical-demo"
           @select="jump"
         >
-          <el-menu-item index="/index">
+          <!-- <el-menu-item index="/index">
             <i class="el-icon-s-home"></i>
             <span slot="title">主页</span>
-          </el-menu-item>
+          </el-menu-item> -->
           <el-menu-item index="/room">
             <i class="el-icon-s-comment"></i>
             <span slot="title">聊天室</span>
@@ -30,7 +30,7 @@
           <el-avatar
             shape="square"
             size="medium"
-            src="/default_avatar.png"
+            :src="getAvatar()"
             class="squareAva"
           ></el-avatar
           ><el-dropdown @command="dropdown_command">
@@ -38,8 +38,19 @@
               {{ username }}<i class="el-icon-arrow-down el-icon--right"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="editAvatar">更改头像</el-dropdown-item>
-              <el-dropdown-item command="change">改名</el-dropdown-item>
+              <el-dropdown-item command=""
+                ><el-upload
+                  :action="upload.action"
+                  :headers="upload.headers"
+                  :limit="1"
+                  :on-success="uploadSuc"
+                  :on-error="uploadFail"
+                  :file-list="upload.fileList"
+                  :show-file-list="false"
+                  >修改头像
+                </el-upload>
+              </el-dropdown-item>
+              <el-dropdown-item command="change"> 修改昵称</el-dropdown-item>
               <el-dropdown-item command="logout">退出账号</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
@@ -77,18 +88,18 @@
         </div>
       </el-image>
     </el-dialog>
-    <el-dialog title="改头像 - ￥99" :visible.sync="avaDialog">
+    <!-- <el-dialog title="改头像 - ￥99" :visible.sync="avaDialog">
       <el-image src="/78f059519d37dd78422c4db6ae2a2b4.jpg">
         <div slot="placeholder" class="">
           加载中<span class="dot">...</span>
         </div>
       </el-image>
-    </el-dialog>
+    </el-dialog> -->
   </div>
 </template>
 
 <script>
-import { getCache, delCache } from "@/utils/useCache";
+import { getCache, getMyself, clearAllCache, setCache } from "@/utils/useCache";
 import Notify from "@/utils/notify";
 export default {
   data() {
@@ -96,10 +107,22 @@ export default {
       isCollapse: false,
       vivo50Dialog: false,
       avaDialog: false,
-      username: getCache(process.env.VUE_APP_USERNAME_KEY),
+      username: getMyself().username,
+      userID: getMyself().userID,
+      upload: {
+        headers: {
+          Authorization: getMyself().token,
+        },
+        fileList: [],
+        action: process.env.VUE_APP_BASE_URL + "/api/upload",
+      },
     };
   },
+
   methods: {
+    getAvatar() {
+      return getMyself().avatar ? getMyself().avatar : "/default_avatar.png";
+    },
     jump(key) {
       if (this.$route.path != key && key.startsWith("/")) {
         this.$router.push(key);
@@ -109,9 +132,7 @@ export default {
       Notify.success(
         `用户 ${getCache(process.env.VUE_APP_USERNAME_KEY)} 退出成功`
       );
-      delCache(process.env.VUE_APP_USERNAME_KEY);
-      delCache(process.env.VUE_APP_USERID_KEY);
-      delCache(process.env.VUE_APP_TOKEN_KEY);
+      clearAllCache();
       this.$router.push("/login");
     },
     vivo50() {
@@ -128,6 +149,27 @@ export default {
       } else if (c === "editAvatar") {
         this.editAVA();
       }
+    },
+    uploadSuc(r, file, fileList) {
+      this.fileList = [];
+      if (r.code === -2) {
+        Notify.error(r.msg);
+        clearAllCache();
+        this.$router.push("/login");
+      } else if (r.code === -1) {
+        Notify.error(r.msg);
+      } else {
+        let avatarList = null;
+        avatarList = getCache(process.env.VUE_APP_AVATAR_KEY);
+        avatarList[this.userID] = r.data;
+        setCache(process.env.VUE_APP_AVATAR_KEY, avatarList);
+        Notify.success("上传头像成功！");
+        location.reload();
+      }
+    },
+    uploadFail(r, file, fileList) {
+      this.fileList = [];
+      Notify.error(e);
     },
   },
 };

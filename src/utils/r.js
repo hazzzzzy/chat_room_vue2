@@ -1,12 +1,12 @@
 import axios from "axios";
 import Notify from "./notify"; // ✅ 手动引入 Message 组件
-import { getCache } from "@/utils/useCache";
+import { getCache, clearAllCache } from "@/utils/useCache";
 import router from "@/route"; // 引入 Vue Router 实例（如果你需要跳转登录页）
 
 // const ignoreList = ["/login"];
 
 const http = axios.create({
-  baseURL: process.env.VUE_APP_BASE_URL,
+  baseURL: `${process.env.VUE_APP_BASE_URL}/api`,
   timeout: 15000,
   // headers: { "Content-Type": "application/json" },
 });
@@ -37,6 +37,7 @@ http.interceptors.response.use(
     let data = response.data;
     if (data.code === -2) {
       Notify.error(data.msg);
+      clearAllCache();
       router.push("/login");
       return Promise.reject(data.msg);
     } else if (data.code === -1) {

@@ -42,17 +42,13 @@
     <section class="why-choose-us-section">
       <div class="why-choose-us-container">
         <div class="why-image-wrapper">
-          <img
-            src="https://via.placeholder.com/600x350/E0E0E0/333333?text=Chat+UI+Preview"
-            alt="聊天室界面示例"
-            class="chat-ui-preview"
-          />
+          <img src="/room.png" alt="聊天室界面示例" class="chat-ui-preview" />
         </div>
         <div class="why-text-content">
           <h2>简单直观，即刻上手</h2>
           <p>
             我们深知流畅的用户体验至关重要。
-            {{ siteName }} 拥有**简洁清爽的界面**，让您无需学习即可快速融入。
+            {{ siteName }} 拥有简洁清爽的界面，让您无需学习即可快速融入。
             无论是文字交流还是发送表情、分享图片，都能轻松实现。
             在这里，每一次点击都旨在拉近您与世界的距离，让沟通变得前所未有的简单和愉快。
           </p>
@@ -157,8 +153,8 @@ section {
 .hero-section {
   background: linear-gradient(
     135deg,
-    #457b9d 0%,
-    #a8dadc 100%
+    #8888f9 0%,
+    #4077df 100%
   ); /* Example strong blue gradient */
   /* Or use your preferred gradient from previous suggestions */
   color: white;

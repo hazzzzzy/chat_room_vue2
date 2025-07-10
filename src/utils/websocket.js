@@ -11,7 +11,7 @@ function createWs() {
   //   router.push("/login");
   // }
   // 替换成你的后端 WebSocket 地址
-  socket = io(`http://10.1.12.187:10086`, {
+  socket = io(process.env.VUE_APP_BASE_URL, {
     auth: {
       token: "Bearer " + getCache(process.env.VUE_APP_TOKEN_KEY),
     },
