@@ -36,12 +36,6 @@
           class="empty-container"
           v-show="!room"
         ></el-empty>
-        <!-- <el-button
-          type="primary"
-          @click="loadMoreHistory"
-          v-show="isConnect && countCurrentMsg() < this.roomMessageAmount"
-          >加载更多历史记录
-        </el-button> -->
         <div
           class="isHistoryRemain"
           v-show="isConnect && countCurrentMsg() < this.roomMessageAmount"
@@ -56,8 +50,8 @@
         >
           <!-- 系统 -->
           <div
-            :class="getHistorySource(msg.sender)"
-            v-if="msg.role === '系统消息'"
+            :class="getHistorySource(msg.senderID, msg.role)"
+            v-if="getHistoryPosition('system', msg.senderID, msg.role)"
           >
             <div class="msg-main">
               <div
@@ -72,8 +66,8 @@
           </div>
           <!-- 本人 -->
           <div
-            :class="getHistorySource(msg.senderID)"
-            v-if="msg.senderID === me.userID"
+            :class="getHistorySource(msg.senderID, msg.role)"
+            v-if="getHistoryPosition('self', msg.senderID, msg.role)"
           >
             <div class="msg-main">
               <div class="msg-header">
@@ -99,8 +93,8 @@
           </div>
           <!-- 他人 -->
           <div
-            :class="getHistorySource(msg.senderID)"
-            v-if="msg.senderID !== me.userID && msg.role !== '系统消息'"
+            :class="getHistorySource(msg.senderID, msg.role)"
+            v-if="getHistoryPosition('other', msg.senderID, msg.role)"
           >
             <div class="msg-ava">
               <el-avatar
@@ -210,7 +204,7 @@ export default {
       fangdou: false,
       sendMsgfangdou: false,
       emoji: false,
-      avatarList: getCache(process.env.VUE_APP_AVATAR_KEY),
+      avatarList: [],
     };
   },
   computed: {
@@ -252,14 +246,15 @@ export default {
       console.log(this.avatarList);
     },
     async jump(key) {
-      this.loading.roomListLoading = true;
-      if (this.isConnect !== true) {
-        await this.connWs();
-      }
       if (key == this.room) {
         this.loading.roomListLoading = false;
         return;
       }
+      this.loading.roomListLoading = true;
+      if (this.isConnect !== true) {
+        await this.connWs();
+      }
+
       this.$socket.emit("serverJoinRoom", {
         roomID: key,
         username: this.me.username,
@@ -275,6 +270,7 @@ export default {
         .then((data) => {
           this.rooms = data.data.room;
           setCache(process.env.VUE_APP_AVATAR_KEY, data.data.avatarList);
+          this.avatarList = data.data.avatarList;
         })
         .catch((e) => {
           console.error(e);
@@ -412,20 +408,47 @@ export default {
     },
     // 获取聊天气泡样式
     getMsgColor(senderID) {
-      const userID = this.me.userID;
-      if (senderID === userID) {
+      if (senderID === this.me.userID) {
         return "rgb(149, 236, 105)";
       } else {
         return;
       }
     },
-    getHistorySource(v) {
-      if (v == this.me.userID) {
-        return "msg-container self-msg-container";
-      } else if (v === "系统消息") {
+    getHistorySource(senderID, role) {
+      if (role === "system") {
         return "msg-container system-msg-container";
-      } else if (v !== this.me.userID) {
+      } else if (role === "user" && senderID === this.me.userID) {
+        return "msg-container self-msg-container";
+      } else if (role === "user" && senderID !== this.me.userID) {
         return "msg-container other-msg-container";
+      }
+      return;
+    },
+    getHistoryPosition(position, senderID, role) {
+      if (position === "self") {
+        console.log(
+          [this.me.userID, typeof this.me.userID],
+          [senderID, typeof senderID],
+          role,
+          this.me.userID === senderID
+        );
+        if (role === "user" && senderID === this.me.userID) {
+          return true;
+        } else {
+          return;
+        }
+      } else if (position === "other") {
+        if (role === "user" && senderID !== this.me.userID) {
+          return true;
+        } else {
+          return;
+        }
+      } else if (position === "system") {
+        if (role === "system" && !senderID) {
+          return true;
+        } else {
+          return;
+        }
       }
     },
     //加载更多历史数据
@@ -557,6 +580,7 @@ export default {
         .msg-container {
           display: flex;
           flex-direction: row;
+          // align-items: center;
           margin-bottom: 20px;
           width: 100%;
           font-size: 14px;

@@ -205,7 +205,7 @@ export default {
       color: #409eff;
     }
     .squareAva {
-      margin-right: 20px;
+      margin-right: 10px;
     }
   }
 }

@@ -23,7 +23,7 @@ function getMyself() {
   avatar = avatar[userID];
   return {
     username: username,
-    userID: userID,
+    userID: String(userID),
     token: token,
     avatar: avatar,
   };
