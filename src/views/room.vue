@@ -426,12 +426,6 @@ export default {
     },
     getHistoryPosition(position, senderID, role) {
       if (position === "self") {
-        console.log(
-          [this.me.userID, typeof this.me.userID],
-          [senderID, typeof senderID],
-          role,
-          this.me.userID === senderID
-        );
         if (role === "user" && senderID === this.me.userID) {
           return true;
         } else {

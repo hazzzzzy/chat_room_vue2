@@ -81,12 +81,28 @@
       </el-aside> -->
       <el-main> <router-view></router-view> </el-main>
     </el-container>
-    <el-dialog title="改名卡 - ￥50" :visible.sync="vivo50Dialog">
-      <el-image src="/78f059519d37dd78422c4db6ae2a2b4.jpg">
-        <div slot="placeholder" class="">
-          加载中<span class="dot">...</span>
-        </div>
-      </el-image>
+    <el-dialog title="修改昵称" :visible.sync="vivo50Dialog" width="400px">
+      <el-form
+        :inline="true"
+        :model="editNameForm"
+        class="demo-form-inline"
+        :rules="editNameForm.rules"
+        ref="editForm"
+        v-loading="editNameForm.loading"
+        @submit.native.prevent
+      >
+        <el-form-item label="" prop="username">
+          <el-input
+            v-model="editNameForm.username"
+            placeholder="输入昵称"
+          ></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="submitForm('editForm')"
+            >提交</el-button
+          >
+        </el-form-item>
+      </el-form>
     </el-dialog>
     <!-- <el-dialog title="改头像 - ￥99" :visible.sync="avaDialog">
       <el-image src="/78f059519d37dd78422c4db6ae2a2b4.jpg">
@@ -101,6 +117,7 @@
 <script>
 import { getCache, getMyself, clearAllCache, setCache } from "@/utils/useCache";
 import Notify from "@/utils/notify";
+import http from "@/utils/r";
 export default {
   data() {
     return {
@@ -115,6 +132,21 @@ export default {
         },
         fileList: [],
         action: process.env.VUE_APP_BASE_URL + "/api/upload",
+      },
+      editNameForm: {
+        username: "",
+        rules: {
+          username: [
+            { required: true, message: "请输入新昵称", trigger: "blur" },
+            {
+              min: 3,
+              max: 10,
+              message: "长度在 3 到 10 个字符",
+              trigger: "blur",
+            },
+          ],
+        },
+        loading: false,
       },
     };
   },
@@ -170,6 +202,30 @@ export default {
     uploadFail(r, file, fileList) {
       this.fileList = [];
       Notify.error(e);
+    },
+    submitForm(formName) {
+      this.$refs[formName].validate(async (valid) => {
+        if (valid) {
+          this.editNameForm.loading = true;
+          await http
+            .post("/user/edit", { username: this.editNameForm.username })
+            .then((r) => {
+              setCache(
+                process.env.VUE_APP_USERNAME_KEY,
+                this.editNameForm.username
+              );
+              Notify.success(r.msg);
+              setTimeout(() => {
+                location.reload();
+              }, 500);
+            })
+            .catch((e) => {})
+            .finally(() => {
+              this.editNameForm.loading = false;
+            });
+        }
+        return;
+      });
     },
   },
 };
