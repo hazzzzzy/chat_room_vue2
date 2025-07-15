@@ -3,7 +3,7 @@
     <!-- 新增 ChatWave 标题 -->
     <div class="title">ChatWave</div>
     <el-card class="loginElement" shadow="hover">
-      <h3>欢迎使用ChatWave</h3>
+      <!-- <h3>欢迎使用</h3> -->
       <el-form
         :model="loginForm"
         :rules="rules"
@@ -121,9 +121,22 @@ export default {
     flex-direction: column;
     text-align: center;
     min-width: 300px; /* Ensure the login box has a minimum width */
-    min-height: 300px; /* Ensure the login box has a minimum height */
+    min-height: 200px; /* Ensure the login box has a minimum height */
     background: rgba(255, 255, 255, 0.5); /* Transparent background */
     backdrop-filter: blur(10px); /* Frosted glass effect */
+
+    .demo-form-inline {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .el-form-item {
+      width: 100%;
+    }
+    .el-form-item:last-of-type {
+      margin-bottom: 0;
+    }
   }
 }
 .main::before {

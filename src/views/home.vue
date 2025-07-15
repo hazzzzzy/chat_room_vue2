@@ -42,7 +42,11 @@
     <section class="why-choose-us-section">
       <div class="why-choose-us-container">
         <div class="why-image-wrapper">
-          <img src="/room.png" alt="聊天室界面示例" class="chat-ui-preview" />
+          <img
+            src="https://bro9-1327032498.cos.ap-nanjing.myqcloud.com/20250710175948.png"
+            alt="聊天室界面示例"
+            class="chat-ui-preview"
+          />
         </div>
         <div class="why-text-content">
           <h2>简单直观，即刻上手</h2>
@@ -59,20 +63,25 @@
     <section class="cta-section">
       <h2>立即加入，开启您的互动时刻！</h2>
       <p>免费注册，无限畅聊，发现更多精彩。</p>
-      <div :href="registerLink" class="btn-primary" @click="vivo50">
-        免费注册
-      </div>
+      <el-popover placement="right" trigger="click">
+        <h2>注册功能暂未开启，仅限登录</h2>
+        <div
+          :href="registerLink"
+          slot="reference"
+          class="btn-primary"
+          @click="vivo50"
+        >
+          免费注册
+        </div>
+      </el-popover>
+
       <p class="login-prompt">
         已有账号？ <a :href="loginLink" class="link-secondary">立即登录</a>
       </p>
     </section>
-    <el-dialog title="账号注册 - ￥50" :visible.sync="vivo50Dialog">
-      <el-image src="/78f059519d37dd78422c4db6ae2a2b4.jpg">
-        <div slot="placeholder" class="">
-          加载中<span class="dot">...</span>
-        </div>
-      </el-image>
-    </el-dialog>
+    <section class="beian">
+      <p>备案号：粤xxxx</p>
+    </section>
   </div>
 </template>
 
@@ -345,6 +354,12 @@ section {
   text-decoration: underline;
 }
 
+.beian {
+  font-size: 1.15em;
+  color: #555;
+  line-height: 1.8;
+  text-align: center;
+}
 /* 响应式调整 */
 @media (max-width: 992px) {
   .hero-content h1 {
