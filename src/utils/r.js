@@ -14,6 +14,12 @@ const http = axios.create({
 // 2. 添加请求拦截器
 http.interceptors.request.use(
   (config) => {
+    // 只有 POST/PUT/PATCH/DELETE 请求才设置 Content-Type
+    // if (
+    //   ["post", "put", "patch", "delete"].includes(config.method?.toLowerCase())
+    // ) {
+    //   config.headers["Content-Type"] = "application/json";
+    // }
     const token = getCache(process.env.VUE_APP_TOKEN_KEY); // 或从你的 Vuex/Redux store 获取
     // 如果 Token 存在，就添加到请求头中
     if (token) {
@@ -41,6 +47,7 @@ http.interceptors.response.use(
       router.push("/login");
       return Promise.reject(data.msg);
     } else if (data.code === -1) {
+      console.error(data.msg);
       Notify.error(data.msg);
       return Promise.reject(data.msg);
     } else {

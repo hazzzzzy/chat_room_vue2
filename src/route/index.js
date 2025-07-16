@@ -9,6 +9,7 @@ import notfound from "@/views/404.vue";
 import index from "@/views/index.vue";
 import login from "@/views/login.vue";
 import test from "@/views/test.vue";
+import user from "@/views/user.vue";
 
 import { getCache } from "@/utils/useCache";
 import { socket } from "@/utils/websocket";
@@ -24,6 +25,7 @@ const routes = [
       { path: "/index", component: index },
       { path: "/room", component: room },
       { path: "/test", component: test },
+      { path: "/user", component: user },
     ],
   },
   { path: "*", component: notfound },

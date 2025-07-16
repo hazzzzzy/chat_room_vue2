@@ -9,22 +9,14 @@
           class="el-menu-vertical-demo"
           @select="jump"
         >
-          <!-- <el-menu-item index="/index">
-            <i class="el-icon-s-home"></i>
-            <span slot="title">主页</span>
-          </el-menu-item> -->
           <el-menu-item index="/room">
-            <i class="el-icon-s-comment"></i>
+            <i class="el-icon-chat-dot-square"></i>
             <span slot="title">聊天室</span>
           </el-menu-item>
-          <!-- <el-menu-item index="/test">
-            <i class="el-icon-setting"></i>
-            <span slot="title">test</span>
-          </el-menu-item> -->
-          <!-- <el-menu-item index="3" @click="logout">
-            <i class="el-icon-setting"></i>
-            <span slot="title">退出账号</span>
-          </el-menu-item> -->
+          <el-menu-item index="/user">
+            <i class="el-icon-user"></i>
+            <span slot="title">用户管理</span>
+          </el-menu-item>
         </el-menu>
         <div id="avatar">
           <el-avatar
@@ -56,29 +48,6 @@
           </el-dropdown>
         </div>
       </el-header>
-
-      <!-- <el-aside width="200px"
-        ><el-menu
-          default-active="2"
-          class="el-menu-vertical-demo"
-          @open="handleOpen"
-          @close="handleClose"
-          @select="jump"
-        >
-          <el-menu-item index="/room">
-            <i class="el-icon-setting"></i>
-            <span slot="title">聊天室</span>
-          </el-menu-item>
-          <el-menu-item index="2" @click="vivo50">
-            <i class="el-icon-setting"></i>
-            <span slot="title">改名</span>
-          </el-menu-item>
-          <el-menu-item index="3" @click="logout">
-            <i class="el-icon-setting"></i>
-            <span slot="title">退出账号</span>
-          </el-menu-item>
-        </el-menu>
-      </el-aside> -->
       <el-main> <router-view></router-view> </el-main>
     </el-container>
     <el-dialog title="修改昵称" :visible.sync="vivo50Dialog" width="400px">
