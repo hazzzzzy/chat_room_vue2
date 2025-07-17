@@ -64,7 +64,7 @@
       <h2>立即加入，开启您的互动时刻！</h2>
       <p>免费注册，无限畅聊，发现更多精彩。</p>
       <el-popover placement="right" trigger="click">
-        <h2>注册功能暂未开启，仅限登录</h2>
+        <h2>测试账号：test，密码：123456</h2>
         <div
           :href="registerLink"
           slot="reference"

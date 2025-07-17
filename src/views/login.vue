@@ -100,9 +100,9 @@ export default {
   .title {
     position: absolute;
     top: 50%;
-    left: 25%; /* 左半边中心 */
-    transform: translate(-50%, -50%);
-    font-size: 100px;
+    left: 20%; /* 左半边中心 */
+    transform: translate(0, -50%);
+    font-size: 150px;
     font-weight: bold;
     color: #ffffff;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
@@ -116,10 +116,10 @@ export default {
       margin-top: 0;
       margin-bottom: 30px;
     }
-    margin-right: 100px;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
+    position: absolute;
+    top: 50%;
+    right: 10%; /* 左半边中心 */
+    transform: translate(0%, -50%);
     min-width: 300px; /* Ensure the login box has a minimum width */
     min-height: 200px; /* Ensure the login box has a minimum height */
     background: rgba(255, 255, 255, 0.5); /* Transparent background */
