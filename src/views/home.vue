@@ -80,7 +80,9 @@
       </p>
     </section>
     <section class="beian">
-      <p>备案号：粤xxxx</p>
+      ICP备案/许可证号：<a href="https://beian.miit.gov.cn/" target="_blank"
+        >粤ICP备2024269056号-2</a
+      >
     </section>
   </div>
 </template>
