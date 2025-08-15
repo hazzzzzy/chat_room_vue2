@@ -15,6 +15,10 @@
         只能上传jpg/png文件，且不超过500kb
       </div>
     </el-upload>
+    <el-image
+      style="width: 100px; height: 100px; margin-top: 20px"
+      src="https://bro9-1327032498.cos.ap-nanjing.myqcloud.com/logo.png"
+    ></el-image>
   </div>
 </template>
 

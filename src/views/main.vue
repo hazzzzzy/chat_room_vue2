@@ -13,6 +13,7 @@
             <i class="el-icon-chat-dot-square"></i>
             <span slot="title">聊天室</span>
           </el-menu-item>
+
           <el-menu-item index="/user">
             <i class="el-icon-user"></i>
             <span slot="title">用户管理</span>
@@ -87,6 +88,7 @@
 import { getCache, getMyself, clearAllCache, setCache } from "@/utils/useCache";
 import Notify from "@/utils/notify";
 import http from "@/utils/r";
+import { loadDify, removeDify } from "@/utils/loadDify";
 export default {
   data() {
     return {
@@ -133,6 +135,7 @@ export default {
       Notify.success(
         `用户 ${getCache(process.env.VUE_APP_USERNAME_KEY)} 退出成功`
       );
+      setCache(process.env.VUE_APP_IS_LOADED, false); // 设置已加载标志
       clearAllCache();
       this.$router.push("/login");
     },
@@ -145,6 +148,7 @@ export default {
     dropdown_command(c) {
       if (c === "logout") {
         this.logout();
+        removeDify();
       } else if (c === "change") {
         this.vivo50();
       } else if (c === "editAvatar") {
@@ -196,6 +200,21 @@ export default {
         return;
       });
     },
+  },
+  mounted() {
+    const hasToken = !!getCache(process.env.VUE_APP_TOKEN_KEY); // 判断登录
+    if (hasToken) {
+      let isLoad = getCache(process.env.VUE_APP_IS_LOADED);
+      console.log(isLoad);
+
+      loadDify();
+      if (!isLoad) {
+        window.location.reload();
+        setCache(process.env.VUE_APP_IS_LOADED, true); // 设置已加载标志
+      }
+    } else {
+      removeDify();
+    }
   },
 };
 </script>

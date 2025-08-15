@@ -75,7 +75,7 @@ export default {
             setCache(process.env.VUE_APP_TOKEN_KEY, r.data.token);
             setCache(process.env.VUE_APP_AVATAR_KEY, r.data.avatar);
             Notify.success(`欢迎，${r.data.username}`);
-
+            setCache(process.env.VUE_APP_IS_LOADED, false); // 设置已加载标志
             this.$router.push("/room");
           })
           .catch((r) => {
