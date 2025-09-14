@@ -13,6 +13,7 @@
     "element-ui": "^2.15.14",
     "less": "^4.3.0",
     "less-loader": "^12.3.0",
+    "marked": "^4",
     "socket.io-client": "^4.8.1",
     "v-emoji-picker": "^2.3.3",
     "vue": "^2.6.14",

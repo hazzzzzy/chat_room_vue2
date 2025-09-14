@@ -18,6 +18,10 @@
             <i class="el-icon-user"></i>
             <span slot="title">用户管理</span>
           </el-menu-item>
+          <el-menu-item index="/chat">
+            <i class="el-icon-cpu"></i>
+            <span slot="title">智能客服</span>
+          </el-menu-item>
         </el-menu>
         <div id="avatar">
           <el-avatar
